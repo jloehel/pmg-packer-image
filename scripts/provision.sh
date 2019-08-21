@@ -3,7 +3,7 @@ set -xe
 
 echo "deb http://download.proxmox.com/debian stretch pve-no-subscription" >> /etc/apt/sources.list
 echo "deb http://download.proxmox.com/debian stretch pvetest" >> /etc/apt/sources.list
-sed -i 's/^deb/#deb/g' /etc/apt/sources.list.d/pve-enterprise.list
+sed -i 's/^deb/#deb/g' /etc/apt/sources.list.d/pmg-enterprise.list
 
 apt-get dist-upgrade -y
 apt-get install -y qemu-guest-agent cloud-init openssh-server curl iotop vim \
