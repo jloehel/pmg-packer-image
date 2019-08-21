@@ -1,0 +1,41 @@
+version: 2
+jobs:
+  validate:
+    docker:
+      - image: jloehel/packer-custom:0.1.0
+    working_directory: ~/packer
+    steps:
+      - checkout
+      - run:
+          name: Run Packer Validation
+          command: |
+            for i in $(ls *.json); do
+              packer validate $i
+            done
+  build:
+    docker:
+      - image: jloehel/packer-custom:0.1.0
+    working_directory: ~/packer
+    steps:
+      - checkout
+      - run:
+          name: Run Packer Build
+          command: |
+            for i in $(ls *.json); do
+              rm -rf output
+              PACKER_LOG=1 packer build $i
+              ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${CIRCLE_TAG} output
+            done
+workflows:
+  version: 2
+  on-push:
+    jobs:
+      - validate
+  on-release:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^\d+\.\d+\.\d+$/

@@ -1,0 +1,72 @@
+{
+  "variables": {
+    "hostname": "proxmox",
+    "domain": "tf.local",
+    "email": "root@tf.local",
+    "ssh_password": "12345678"
+  },
+  "provisioners": [{
+    "type": "shell",
+    "scripts": [
+      "scripts/provision.sh",
+      "scripts/networking.sh"
+    ],
+    "override": {
+      "proxmox": {
+        "execute_command": "sh '{{.Path}}'"
+      }
+    }
+  }],
+  "builders": [{
+      "name": "proxmox",
+      "type": "qemu",
+      "iso_checksum": "f55733f978d6774a3ed49cbde4977087e2dee46f",
+      "iso_checksum_type": "sha1",
+      "iso_url": "https://www.proxmox.com/en/downloads?task=callelement&format=raw&item_id=446&element=f85c494b-2b32-4109-b8c1-083cca2b7db6&method=download&args[0]=0978db0d47844ea68e491939f4f48741",
+      "ssh_wait_timeout": "30s",
+      "boot_wait": "1s",
+      "shutdown_command": "shutdown -P now",
+      "disk_size": 32768,
+      "format": "qcow2",
+      "output_directory": "output",
+      "qemuargs": [
+        [ "-m", "1024M" ]
+      ],
+      "headless": true,
+      "machine_type": "pc",
+      "accelerator": "tcg",
+      "http_directory": "http",
+      "http_port_min": 10082,
+      "http_port_max": 10089,
+      "ssh_host_port_min": 2222,
+      "ssh_host_port_max": 2229,
+      "ssh_username": "root",
+      "ssh_password": "{{ user `ssh_password`}}",
+      "ssh_port": 22,
+      "ssh_wait_timeout": "90m",
+      "vnc_port_min": 5900,
+      "vnc_port_max": 5900,
+      "vnc_bind_address": "0.0.0.0",
+      "vm_name": "proxmox52.qcow2",
+      "disk_interface": "virtio-scsi",
+      "disk_discard": "unmap",
+      "disk_detect_zeroes": "unmap",
+      "net_device": "virtio-net-pci",
+      "boot_command": [
+        "<enter><wait90>",
+        "<leftAltOn>g<leftAltOff><wait>",
+        "<leftAltOn>n<leftAltOff><wait30>",
+        "United Sta<wait2><enter><wait5>",
+        "<leftAltOn>n<leftAltOff><wait30>",
+        "{{ user `ssh_password`}}<tab><wait>",
+        "{{ user `ssh_password`}}<tab><wait>",
+        "{{ user `email`}}",
+        "<leftAltOn>n<leftAltOff><wait30>",
+        "{{ user `hostname`}}.{{user `domain`}}<enter><wait10>",
+        "<leftAltOn>n<leftAltOff><wait30>",
+        "<leftAltOn>i<leftAltOff><wait1300>",
+        "<return><wait><leftAltOn>r<leftAltOff><return><wait>",
+        "<return><wait><leftAltOn>r<leftAltOff><return><wait>"
+      ]
+  }]
+}
