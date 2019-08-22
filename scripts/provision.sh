@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
 set -xe
 
-echo "deb http://download.proxmox.com/debian stretch pve-no-subscription" >> /etc/apt/sources.list
-echo "deb http://download.proxmox.com/debian stretch pvetest" >> /etc/apt/sources.list
+echo "deb http://download.proxmox.com/debian stretch pve-no-subscription" >> /etc/apt/sources.list.d/pmg-community.list 
+echo "deb http://download.proxmox.com/debian stretch pvetest" >> /etc/apt/sources.list.d/pmg-community.list
 sed -i 's/^deb/#deb/g' /etc/apt/sources.list.d/pmg-enterprise.list
 
-apt-get dist-upgrade -y
-apt-get install -y qemu-guest-agent cloud-init openssh-server curl iotop vim \
-                   git lm-sensors sg3-utils ethtool iperf ansible ntp ntpdate \
-                   ntpstat rdate sysbench nmap arp-scan gdebi-core pssh \
-                   traceroute debian-goodies tmux
+DEBIAN_FRONTEND=noninteractive apt update -y
+DEBIAN_FRONTEND=noninteractive apt dist-upgrade -y
+DEBIAN_FRONTEND=noninteractive apt install -y qemu-guest-agent
 
 cat > /etc/default/grub <<EOF
 GRUB_DEFAULT=0
@@ -27,11 +25,6 @@ GRUB_DISABLE_RECOVERY="true"
 EOF
 
 grub-mkconfig -o /boot/grub/grub.cfg
-
-systemctl enable cloud-init
-systemctl enable cloud-config
-systemctl enable cloud-final
-systemctl enable cloud-init-local
 
 apt-get remove -y --auto-remove build-essential
 apt-get autoremove -y
