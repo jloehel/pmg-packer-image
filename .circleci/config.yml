@@ -20,6 +20,7 @@ jobs:
       - checkout
       - run:
           name: Run Packer Build
+          no_output_timeout: 1310
           command: |
             for i in $(ls *.json); do
               rm -rf output
