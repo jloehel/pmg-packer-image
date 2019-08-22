@@ -2,7 +2,7 @@
 set -xe
 
 # enable DHCP on all network interfaces by default
-cat >/etc/nework/interfaces <<EOF
+cat >/etc/network/interfaces <<EOF
 auto lo
 iface lo inet loopback
 
