@@ -7,7 +7,7 @@ sed -i 's/^deb/#deb/g' /etc/apt/sources.list.d/pmg-enterprise.list
 
 DEBIAN_FRONTEND=noninteractive apt update -y
 DEBIAN_FRONTEND=noninteractive apt dist-upgrade -y
-DEBIAN_FRONTEND=noninteractive apt install -y qemu-guest-agent
+DEBIAN_FRONTEND=noninteractive apt install -y qemu-guest-agent cloud-init
 
 cat > /etc/default/grub <<EOF
 GRUB_DEFAULT=0
