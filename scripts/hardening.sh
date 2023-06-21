@@ -6,7 +6,7 @@ export DEBIAN_FRONTEND=noninteractive
 sudo apt install -y fail2ban auditd re2c gcc pyzor make unzip
 
 # DCC
-wget -O /tmp/dcc.tar.Z wget http://www.dcc-servers.net/dcc/source/dcc.tar.Z
+wget -O /tmp/dcc.tar.Z http://www.dcc-servers.net/dcc/source/dcc.tar.Z
 tar xzvf /tmp/dcc.tar.Z
 cd dcc-* && ./configure && make && sudo make install
 sudo tee /lib/systemd/system/dcc.service > /dev/null << EOL 
@@ -34,16 +34,15 @@ sudo systemctl enable dcc
 
 # geolocation and re2c
 sudo wget -O /etc/cron.hourly/sa-update sa.schaal-it.net/sa-update \
-  && chown root.root /etc/cron.hourly/sa-update \
-  && chmod 755 /etc/cron.hourly/sa-update
+  && sudo chown root.root /etc/cron.hourly/sa-update \
+  && sudo chmod 755 /etc/cron.hourly/sa-update
 sudo sed -i 's/sa.schaal-it.net/sa.schaal-it.net\nupdates.spamassassin.org\nspamassassin.heinlein-support.de/' /etc/cron.hourly/sa-update
 
-sudo wget -O /etc/cron.hourly/geoip_update \
+sudo wget --dns-timeout=60 -O /etc/cron.hourly/geoip_update \
   https://mailfud.org/geoip-legacy/geoip_update.sh \
-  && chown root.root /etc/cron.hourly/geoip_update \
-  && chmod 755 /etc/cron.hourly/geoip_update
-
-sudo /etc/cron.hourly/geoip_update
+  && sudo chown root.root /etc/cron.hourly/geoip_update \
+  && sudo chmod 755 /etc/cron.hourly/geoip_update \
+  && sudo /etc/cron.hourly/geoip_update
 
 sudo mkdir /etc/pmg/templates/
 sudo cp /var/lib/pmg/templates/init.pre.in /etc/pmg/templates/
@@ -95,7 +94,7 @@ EOL
 
 sudo pmgconfig sync --restart 1 \
   && spamassassin -D --lint \
-  && systemctl restart pmg-smtp-filter \
+  && sudo systemctl restart pmg-smtp-filter \
 
 sudo tee /etc/postfix/header_checks > /dev/null << EOL
 /^From:/ INFO

@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 set -xe
 
+APT="sudo DEBIAN_FRONTEND=noninteractive apt-get"
+
 #!/usr/bin/env bash
-
-export DEBIAN_FRONTEND=noninteractive
-
 sudo wget https://enterprise.proxmox.com/debian/proxmox-release-bullseye.gpg -O \
   /etc/apt/trusted.gpg.d/proxmox-release-bullseye.gpg
 
@@ -14,10 +13,10 @@ EOF
 sudo test -f /etc/apt/sources.list.d/pmg-enterprise.list \
   && sudo sed -i 's/^deb/#deb/g' /etc/apt/sources.list.d/pmg-enterprise.list
 
-sudo apt update -y && sudo apt dist-upgrade -y
+$APT update -y && $APT dist-upgrade -y
 
 if [ "x$BUILD_TARGET" == "xcloud" ];then
-sudo apt install -y proxmox-mailgateway
+$APT install -y proxmox-mailgateway
 fi
 
 if [ "x$BUILD_TARGET" == "xvagrant" ];then
@@ -38,9 +37,9 @@ EOF
 sudo grub-mkconfig -o /boot/grub/grub.cfg
 fi
 
-sudo apt-get remove -y --auto-remove build-essential
-sudo apt-get autoremove -y
-sudo apt-get clean -y
+$APT remove -y --auto-remove build-essential
+$APT autoremove -y
+$APT clean -y
 
 # mark all free space
 sudo fstrim -av

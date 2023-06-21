@@ -18,8 +18,7 @@ locals {
   debian_cloud_images = "https://cloud.debian.org/images/cloud/bullseye/latest"
 }
 
-
-source "qemu" "pmg-ec2" {
+source "qemu" "ec2" {
   accelerator = var.accelerator
   boot_wait          = "5s"
   disk_detect_zeroes = "unmap"
@@ -32,27 +31,36 @@ source "qemu" "pmg-ec2" {
   disk_image         = true
   skip_resize_disk   = true
   use_backing_file   = false
-  iso_checksum       = "none"
+  iso_checksum       = "file:${local.debian_cloud_images}/SHA512SUMS"
   iso_url            = "${local.debian_cloud_images}/debian-11-ec2-amd64.tar.xz"
   machine_type       = "pc"
   net_device         = "virtio-net-pci"
-  output_directory   = "artifacts/qemu"
+  output_directory   = "artifacts/ec2"
+  cd_files = [
+    "${path.root}/cdrom/ec2/meta-data"
+  ]
+  cd_content = {
+    user-data = templatefile(
+        "${path.root}/cdrom/ec2/user-data",
+        { password = "${var.ssh_password}" }
+    )
+  }
+  cd_label = "cidata"
   qemuargs = [
     ["-m", "${var.memory}M"],
-    ["-smbios", "type=1,serial=ds=nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/"]
   ]
-  shutdown_command   = "shutdown -P now"
+  shutdown_command   = "sudo systemctl poweroff -i"
   ssh_password       = var.ssh_password
   ssh_port           = var.ssh_port
   ssh_username       = var.ssh_username
   ssh_wait_timeout   = "60m"
-  vm_name            = "${var.name}-${var.version}-${var.arch}-ec2"
+  vm_name            = "${var.name}-${var.version}-${var.arch}-ec2.raw"
   vnc_bind_address   = "0.0.0.0"
-  vnc_port_max       = 5900
+  vnc_port_max       = 5920
   vnc_port_min       = 5900
 }
 
-source "qemu" "pmg-azure" {
+source "qemu" "azure" {
   accelerator = var.accelerator
   boot_wait          = "5s"
   disk_detect_zeroes = "unmap"
@@ -65,27 +73,36 @@ source "qemu" "pmg-azure" {
   disk_image         = true
   skip_resize_disk   = true
   use_backing_file   = false
-  iso_checksum       = "none"
+  iso_checksum       = "file:${local.debian_cloud_images}/SHA512SUMS"
   iso_url            = "${local.debian_cloud_images}/debian-11-azure-amd64.tar.xz"
   machine_type       = "pc"
   net_device         = "virtio-net-pci"
-  output_directory   = "artifacts/qemu"
+  output_directory   = "artifacts/azure"
+  cd_files = [
+    "${path.root}/cdrom/azure/meta-data"
+  ]
+  cd_content = {
+    user-data = templatefile(
+        "${path.root}/cdrom/azure/user-data",
+        { password = "${var.ssh_password}" }
+      )
+  }
+  cd_label = "cidata"
   qemuargs = [
     ["-m", "${var.memory}M"],
-    ["-smbios", "type=1,serial=ds=nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/"]
   ]
-  shutdown_command   = "shutdown -P now"
+  shutdown_command   = "sudo systemctl poweroff -i"
   ssh_password       = var.ssh_password
   ssh_port           = var.ssh_port
   ssh_username       = var.ssh_username
   ssh_wait_timeout   = "60m"
-  vm_name            = "${var.name}-${var.version}-${var.arch}-azure"
+  vm_name            = "${var.name}-${var.version}-${var.arch}-azure.raw"
   vnc_bind_address   = "0.0.0.0"
-  vnc_port_max       = 5900
+  vnc_port_max       = 5920
   vnc_port_min       = 5900
 }
 
-source "qemu" "pmg" {
+source "qemu" "vagrant" {
   accelerator = var.accelerator
   boot_command = [
     "<enter><wait200>",
@@ -117,20 +134,20 @@ source "qemu" "pmg" {
   iso_url            = "https://www.proxmox.com/en/downloads?task=callelement&format=raw&item_id=684&element=f85c494b-2b32-4109-b8c1-083cca2b7db6&method=download&args[0]=e4b8366baa5554db59254c1ad8e81de3"
   machine_type       = "pc"
   net_device         = "virtio-net-pci"
-  output_directory   = "artifacts/qemu"
+  output_directory   = "artifacts/vagrant/kvm"
   qemuargs           = [["-m", "${var.memory}M"]]
   shutdown_command   = "shutdown -P now"
   ssh_password       = var.ssh_password
   ssh_port           = var.ssh_port
   ssh_username       = var.ssh_username
   ssh_wait_timeout   = "60m"
-  vm_name            = "${var.name}-${var.version}-${var.arch}-kvm"
+  vm_name            = "${var.name}-${var.version}-${var.arch}-vagrant.qcow2"
   vnc_bind_address   = "0.0.0.0"
-  vnc_port_max       = 5900
+  vnc_port_max       = 5920
   vnc_port_min       = 5900
 }
 
-source "virtualbox-iso" "pmg" {
+source "virtualbox-iso" "vagrant" {
   guest_os_type        = "Debian11_64"
   guest_additions_path = "VBoxGuestAdditions_{{ .Version }}.iso"
   boot_command = [
@@ -154,13 +171,13 @@ source "virtualbox-iso" "pmg" {
   format                  = "ova"
   iso_checksum            = "9085684327fc36d8006b7160d34733e916300a0ad6bf498ea83cfb901fc2d9d4"
   iso_url                 = "https://www.proxmox.com/en/downloads?task=callelement&format=raw&item_id=684&element=f85c494b-2b32-4109-b8c1-083cca2b7db6&method=download&args[0]=e4b8366baa5554db59254c1ad8e81de3"
-  output_directory        = "artifacts/virtualbox-iso"
+  output_directory        = "artifacts/vagrant/virtualbox"
   shutdown_command        = "shutdown -P now"
   ssh_password            = var.ssh_password
   ssh_port                = var.ssh_port
   ssh_username            = var.ssh_username
   ssh_wait_timeout        = "60m"
-  vm_name                 = "${var.name}-${var.version}-${var.arch}-virtualbox"
+  vm_name                 = "${var.name}-${var.version}-${var.arch}.ova"
   virtualbox_version_file = ".virtualbox_version"
   vboxmanage = [
     [
@@ -197,17 +214,26 @@ source "virtualbox-iso" "pmg" {
 }
 
 build {
+
+  source "virtualbox-iso.vagrant" {
+    name = "virtualbox"
+  }
+
+  source "qemu.vagrant" {
+    name = "libvirt"
+  }
+
   sources = [
-    "source.virtualbox-iso.pmg",
-    "source.qemu.pmg",
-    "source.qemu.pmg-ec2",
-    "source.qemu.pmg-azure"
+    "source.virtualbox-iso.vagrant",
+    "source.qemu.vagrant",
+    "source.qemu.ec2",
+    "source.qemu.azure"
   ]
 
   provisioner "shell" {
     only = [
-      "virtualbox-iso.pmg",
-      "quemu.pmg"
+      "virtualbox-iso.vagrant",
+      "qemu.vagrant"
     ]
     environment_vars = [
       "PACKER_BUILD_NAME=var.name",
@@ -221,12 +247,14 @@ build {
 
   provisioner "shell" {
     only = [
-      "quemu.pmg-ec2",
-      "quemu.pmg-azure"
+      "qemu.ec2",
+      "qemu.azure"
     ]
     environment_vars = [
       "PACKER_BUILD_NAME=var.name",
-      "BUILD_TARGET=cloud"
+      "BUILD_TARGET=cloud",
+      "DOMAIN=var.domain",
+      "HOSTNAME=var.hostname"
     ]
     scripts = [
       "scripts/pmg.sh",
@@ -236,8 +264,8 @@ build {
 
   provisioner "shell" {
     only = [
-      "virtualbox-iso.pmg",
-      "quemu.pmg"
+      "virtualbox-iso.vagrant",
+      "qemu.vagrant"
     ]
     scripts = [
       "scripts/vagrant/user.sh",
@@ -248,26 +276,39 @@ build {
 
   provisioner "shell" {
     only = [
-      "virtualbox-iso.pmg"
+      "virtualbox-iso.vagrant"
     ]
     scripts = [
-      "scripts/virtualbox.sh",
+      "scripts/virtualbox.sh"
     ]
   }
 
   provisioner "shell" {
     only = [
-      "quemu.pmg"
+      "qemu.vagrant"
     ]
     scripts = [
-      "scripts/qemu.sh",
+      "scripts/qemu.sh"
     ]
   }
 
   provisioner "shell" {
     only = [
-      "virtualbox-iso.pmg",
-      "quemu.pmg"
+      "qemu.ec2",
+      "qemu.azure"
+    ]
+    environment_vars = [
+      "BUILD_TARGET=cloud"
+    ]
+    scripts = [
+      "scripts/cleanup/cloud.sh"
+    ]
+  }
+
+  provisioner "shell" {
+    only = [
+      "virtualbox-iso.vagrant",
+      "qemu.vagrant"
     ]
     scripts = [
       "scripts/cleanup/common.sh",
@@ -279,21 +320,60 @@ build {
   }
 
   post-processor "checksum" {
-    checksum_types      = ["md5", "sha1", "sha256"]
+    only = [
+      "virtualbox-iso.vagrant",
+      "qemu.vagrant"
+    ]
+    checksum_types      = ["md5", "sha1", "sha256", "sha512"]
     keep_input_artifact = true
-    output = "artifacts/{{ .BuilderType }}/{{.BuildName}}_{{.BuilderType}}_{{.ChecksumType}}.checksum"
+    output = "artifacts/vagrant/${source.name}/${var.name}-${var.version}-${var.arch}-vagrant.checksum"
+  }
+
+
+  post-processor "checksum" {
+    only = [
+      "qemu.ec2",
+      "qemu.azure"
+    ]
+    checksum_types      = ["md5", "sha1", "sha256", "sha512"]
+    keep_input_artifact = true
+    output = "artifacts/${source.name}/${var.name}-${var.version}-${var.arch}-{{ .BuildName }}.checksum"
   }
 
   post-processor "manifest" {
-    output     = "artifacts/manifest.json"
+    only = [
+      "qemu.ec2",
+      "qemu.azure"
+    ]
+    output     = "artifacts/${source.name}/${var.name}-${var.version}-${var.arch}-${source.name}-manifest.json"
+    strip_path = true
+    strip_time = true
+  }
+
+  post-processor "compress" {
+    only = [
+      "qemu.ec2",
+      "qemu.azure"
+    ]
+    output = "artifacts/${source.name}/${var.name}-${var.version}-${var.arch}-${source.name}.tar.gz"
+    format = "tar.gz"
+    keep_input_artifact = false
+  }
+
+  post-processor "manifest" {
+    only = [
+      "virtualbox-iso.vagrant",
+      "qemu.vagrant"
+    ]
+    output     = "artifacts/vagrant/${source.name}/${var.name}-${var.version}-${var.arch}-vagrant-manifest.json"
     strip_path = true
     strip_time = true
   }
 
   post-processor "vagrant" {
     only = [
-      "virtualbox-iso.pmg",
-      "quemu.pmg"
+      "virtualbox-iso.vagrant-virtualbox",
+      "qemu.vagrant-qcow2"
     ]
     output              = "images/vagrant-{{ .Provider }}/${var.name}.box"
     # vagrantfile_template = "Vagrantfile.template"

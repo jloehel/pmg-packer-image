@@ -1,0 +1,11 @@
+#cloud-config
+manage_etc_hosts: true
+hostname: debian
+password: ${password}
+chpasswd:
+  expire: False
+ssh_pwauth: True
+bootcmd:
+  - |
+    echo 'Setup NIC manually the udev rule is just for hyper-v'
+    sudo INTERFACE=ens4 /etc/network/cloud-ifupdown-helper
