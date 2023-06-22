@@ -2,6 +2,8 @@
 This repository provides a Hashicorp packer template to generate images for:
 
 - Vagrant
+  - Virtualbox
+  - Libvirt
 - AWS EC2
 - Microsoft Azure
 
@@ -31,30 +33,34 @@ user@laptop:~$ PACKER_LOG=1 packer ...
 ~~~
 
 ### Build the VirtualBox Vagrant Box
+The build is based on the official ISO from Proxmox.
 ~~~console
-user@laptop:~$ packer build -force -only virtualbox-iso.vagrant-virtualbox .
+user@laptop:~$ packer build -force -only virtualbox-iso.vagrant .
 ~~~
 
 ### Build the Qemu Vagrant Box
+The build is based on the official ISO from Proxmox.
 ~~~console
-user@laptop:~$ packer build -force -only qemu.vagrant-qcow2 .
+user@laptop:~$ packer build -force -only qemu.vagrant .
 ~~~
 
 ### Build the EC2 raw image
-The standard user for the EC2 image is `admin`. Please set the username and
-password variable for the build:
+The build is based on the official Debian Cloud image for EC2.
+The standard user for the EC2 image is `admin`. Please set the 
+username and password variable for the build:
 ~~~console
-user@laptop:~$ packer build -force -only qemu.cloud-ec2 \
+user@laptop:~$ packer build -force -only qemu.ec2 \
         -var 'ssh_username=admin' \
         -var 'ssh_password=<password>' .
 ~~~
 Packer will set the specified password automatically via cloud-init for the user.
 
 ### Build the Azure raw image
-The standard user for the Azure image is `debian`. Please set the username and
-password variable for the build:
+The build is based on the official Debian Cloud image for Azure.
+The standard user for the Azure image is `debian`. Please set the 
+username and password variable for the build:
 ~~~console
-user@laptop:~$ packer build -only qemu.cloud-azure \
+user@laptop:~$ packer build -only qemu.azure \
         -var 'ssh_username=debian' \
         -var 'ssh_password=<password>' .
 ~~~
