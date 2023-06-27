@@ -42,11 +42,17 @@ sudo wget --dns-timeout=60 -O /etc/cron.hourly/geoip_update \
   https://mailfud.org/geoip-legacy/geoip_update.sh \
   && sudo chown root.root /etc/cron.hourly/geoip_update \
   && sudo chmod 755 /etc/cron.hourly/geoip_update \
+  && sudo mkdir /usr/share/GeoIP/ \
   && sudo /etc/cron.hourly/geoip_update
 
 sudo mkdir /etc/pmg/templates/
 sudo cp /var/lib/pmg/templates/init.pre.in /etc/pmg/templates/
 sudo cp /var/lib/pmg/templates/main.cf.in /etc/pmg/templates/main.cf.in
+sed -i '/reject_unverified_recipient/a smtpd_data_restrictions = reject_unauth_pipelining' \
+  /etc/pmg/templates/main.cf.in
+sed -i '126 a header_checks = regexp:/etc/postfix/header_checks' \
+  /etc/pmg/templates/main.cf.in
+
 sudo tee -a /etc/pmg/templates/init.pre.in > /dev/null << EOL
 loadplugin Mail::SpamAssassin::Plugin::Pyzor
 use_pyzor 1
@@ -108,12 +114,12 @@ sudo mkdir -p /etc/clamav-unofficial-sigs/ \
   /var/log/clamav-unofficial-sigs/ \
   && sudo chown clamav:clamav /var/lib/clamav-unofficial-sigs \
   && sudo curl https://raw.githubusercontent.com/extremeshok/clamav-unofficial-sigs/master/clamav-unofficial-sigs.sh \
-    -o /usr/local/sbin/clamav-unofficial-sigs \
+    -o /usr/local/sbin/clamav-unofficial-sigs.sh \
   && sudo curl https://raw.githubusercontent.com/extremeshok/clamav-unofficial-sigs/master/config/master.conf \
     -o /etc/clamav-unofficial-sigs/master.conf \
   && sudo curl https://raw.githubusercontent.com/extremeshok/clamav-unofficial-sigs/master/config/user.conf \
     -o /etc/clamav-unofficial-sigs/user.conf \
-  && sudo curl https://raw.githubusercontent.com/extremeshok/clamav-unofficial-sigs/master/config/os/debian.conf \
+  && sudo curl https://raw.githubusercontent.com/extremeshok/clamav-unofficial-sigs/master/config/os/os.debian.conf \
     -o /etc/clamav-unofficial-sigs/os.conf \
   && sudo chmod 755 /usr/local/sbin/clamav-unofficial-sigs
 
@@ -122,14 +128,14 @@ sudo /usr/local/sbin/clamav-unofficial-sigs.sh --install-cron \
   && sudo usr/local/sbin/clamav-unofficial-sigs.sh --install-man \
   && sudo /usr/local/sbin/clamav-unofficial-sigs.sh
 
-sudo curl https://raw.githubusercontent.com/extremeshok/clamav-unofficial-sigs/master/systemd/clamav-unofficial-sigs.service \
+sudo curl https://raw.githubusercontent.com/extremeshok/clamav-unofficial-sigs/master/systemd/system/clamav-unofficial-sigs.service \
     -o /etc/systemd/clamav-unofficial-sigs.service \
-  && sudo curl https://raw.githubusercontent.com/extremeshok/clamav-unofficial-sigs/master/systemd/clamav-unofficial-sigs.timer \
+  && sudo curl https://raw.githubusercontent.com/extremeshok/clamav-unofficial-sigs/master/systemd/system/clamav-unofficial-sigs.timer \
     -o /etc/systemd/clamav-unofficial-sigs.service \
-  && sudo curl https://raw.githubusercontent.com/extremeshok/clamav-unofficial-sigs/master/systemd/clamd.scan.service \
-    -o /etc/systemd/clamd.scan.service
+  && sudo systemctl daemon-reload \
+  && systemctl enable clamav-unofficial-sigs.service \
+  && systemctl enable clamav-unofficial-sigs.timer
 
-sudo systemctl daemon-reload
 # EBL
 sudo tee -a /etc/mail/spamassassin/v342.pre > /dev/null << EOL
 loadplugin Mail::SpamAssassin::Plugin::HashBL
@@ -203,6 +209,8 @@ maxretry = 2
 EOL
 
 # auditd
+sudo wget -O /etc/audit/audit.rules \
+  https://raw.githubusercontent.com/Neo23x0/auditd/master/audit.rules
 
 sudo apt purge -y gcc make
 sudo apt autoremove -y
